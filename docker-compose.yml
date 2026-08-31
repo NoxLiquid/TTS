@@ -1,0 +1,28 @@
+services:
+  tts:
+    build: .
+    image: respiral-tts:latest
+    container_name: respiral-tts
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:5000:5000"
+    environment:
+      TTS_API_TOKEN: "${TTS_API_TOKEN:-}"
+      TTS_DEFAULT_SPEAKER: "${TTS_DEFAULT_SPEAKER:-eugene}"
+      TTS_SAMPLE_RATE: "${TTS_SAMPLE_RATE:-24000}"
+      TTS_TORCH_THREADS: "${TTS_TORCH_THREADS:-2}"
+      TTS_WORKERS: "${TTS_WORKERS:-3}"
+      TTS_MAX_QUEUE: "${TTS_MAX_QUEUE:-48}"
+      TTS_CACHE_SIZE: "${TTS_CACHE_SIZE:-512}"
+      TTS_LOG_LEVEL: "${TTS_LOG_LEVEL:-info}"
+    healthcheck:
+      test: ["CMD", "curl", "-fsS", "http://127.0.0.1:5000/health"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 40s
+    deploy:
+      resources:
+        limits:
+          cpus: "${TTS_CPU_LIMIT:-6}"
+          memory: "${TTS_MEM_LIMIT:-3g}"
