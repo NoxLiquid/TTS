@@ -1,15 +1,19 @@
-import io
 import threading
 
-import soundfile as sf
 import torch
 
+from .audio import encode
 from .ssml import strip_tags, wrap_speak
 
 _VALID_RATES = (8000, 24000, 48000)
 
 
-class SileroTTS:
+class SileroEngine:
+    """Движок Silero v4_ru: 5 русских спикеров + random, поддержка SSML-prosody."""
+
+    name = "silero"
+    supports_random = True
+
     def __init__(self, model_path: str, default_speaker: str, torch_threads: int):
         torch.set_num_threads(max(1, torch_threads))
         self.device = torch.device("cpu")
@@ -28,23 +32,14 @@ class SileroTTS:
             return speaker
         return self.default_speaker
 
-    def synthesize(
-        self,
-        text: str,
-        speaker: str,
-        sample_rate: int,
-        ssml: bool,
-        put_accent: bool,
-        put_yo: bool,
-        fmt: str,
-    ) -> bytes:
+    def synthesize(self, text, speaker, sample_rate, ssml, put_accent, put_yo, fmt) -> bytes:
         spk = self.resolve_speaker(speaker)
         rate = sample_rate if sample_rate in _VALID_RATES else 24000
 
         with self._lock:
             audio = self._apply(text, spk, rate, ssml, put_accent, put_yo)
 
-        return self._encode(audio.numpy(), rate, fmt)
+        return encode(audio.numpy(), rate, fmt)
 
     def _apply(self, text, speaker, rate, ssml, put_accent, put_yo):
         if ssml:
@@ -65,12 +60,3 @@ class SileroTTS:
             put_accent=put_accent,
             put_yo=put_yo,
         )
-
-    @staticmethod
-    def _encode(wav, rate: int, fmt: str) -> bytes:
-        buf = io.BytesIO()
-        if fmt == "wav":
-            sf.write(buf, wav, rate, format="WAV", subtype="PCM_16")
-        else:
-            sf.write(buf, wav, rate, format="OGG", subtype="VORBIS")
-        return buf.getvalue()

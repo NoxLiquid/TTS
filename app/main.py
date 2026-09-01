@@ -9,7 +9,7 @@ from pydantic import BaseModel, Field
 
 from .cache import LruCache
 from .config import settings
-from .tts import SileroTTS
+from .registry import build_registry
 
 logging.basicConfig(level=settings.log_level.upper())
 logger = logging.getLogger("tts")
@@ -40,17 +40,12 @@ class GenerateResponse(BaseModel):
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    logger.info("Loading Silero model from %s", settings.model_path)
-    state["tts"] = SileroTTS(
-        model_path=settings.model_path,
-        default_speaker=settings.default_speaker,
-        torch_threads=settings.torch_threads,
-    )
+    state["tts"] = build_registry(settings)
     state["cache"] = LruCache(settings.cache_size)
     state["lock"] = asyncio.Lock()
     state["pending"] = 0
     logger.info(
-        "Model ready. Speakers: %s. Default: %s",
+        "Engines ready. Speakers: %s. Default: %s",
         state["tts"].speakers,
         state["tts"].default_speaker,
     )
@@ -82,9 +77,9 @@ async def _generate(req: GenerateRequest) -> GenerateResponse:
     if len(text) > settings.max_text_len:
         text = text[: settings.max_text_len]
 
-    tts: SileroTTS = state["tts"]
+    reg = state["tts"]
     cache: LruCache = state["cache"]
-    speaker = tts.resolve_speaker(req.speaker)
+    engine, speaker = reg.resolve(req.speaker)
     rate = req.sample_rate if req.sample_rate else settings.default_sample_rate
 
     key = _cache_key(req, speaker, rate)
@@ -104,7 +99,7 @@ async def _generate(req: GenerateRequest) -> GenerateResponse:
     try:
         async with state["lock"]:
             audio = await asyncio.to_thread(
-                tts.synthesize,
+                engine.synthesize,
                 text,
                 speaker,
                 rate,

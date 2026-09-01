@@ -12,6 +12,20 @@ Corvax TTS API, который уже используется в игровом
 - **HTTP + JSON** — тот же протокол, что ждёт `Content.Server/Corvax/TTS/TTSManager.cs`.
   Сервис — drop-in бэкенд: в игре достаточно указать `tts.api_url` и `tts.api_token`.
 
+## Движки (Silero + Piper)
+
+Сервис мульти-движковый (`app/registry.py`), маршрутизация по полю `speaker`:
+
+- **Silero** `v4_ru` — 5 спикеров (`aidar`, `baya`, `kseniya`, `xenia`, `eugene`) + `random`,
+  поддержка SSML `<prosody>` (pitch/rate).
+- **Piper** — русские голоса `irina` (жен.), `denis`, `dmitri`, `ruslan` (муж.); отдельные
+  ONNX-модели, другой тембр, SSML **не** поддерживается (теги срезаются). Модели грузятся
+  лениво при первом обращении.
+
+Неизвестный `speaker` → дефолт (`eugene`/Silero). Оба движка можно включать/выключать:
+`TTS_ENABLE_SILERO`, `TTS_ENABLE_PIPER`, список Piper-голосов — `TTS_PIPER_VOICES`.
+Модели скачиваются в образ при сборке (Silero `.pt`, Piper с `rhasspy/piper-voices`).
+
 ## API
 
 `POST /tts` (а также `POST /`)
