@@ -8,16 +8,13 @@ services:
       - "127.0.0.1:${TTS_HOST_PORT:-5000}:5000"
     environment:
       TTS_API_TOKEN: "${TTS_API_TOKEN:-}"
-      TTS_DEFAULT_SPEAKER: "${TTS_DEFAULT_SPEAKER:-eugene}"
+      TTS_DEFAULT_SPEAKER: "${TTS_DEFAULT_SPEAKER:-ru_eduard}"
       TTS_SAMPLE_RATE: "${TTS_SAMPLE_RATE:-24000}"
       TTS_TORCH_THREADS: "${TTS_TORCH_THREADS:-2}"
       TTS_WORKERS: "${TTS_WORKERS:-3}"
       TTS_MAX_QUEUE: "${TTS_MAX_QUEUE:-48}"
       TTS_CACHE_SIZE: "${TTS_CACHE_SIZE:-512}"
       TTS_LOG_LEVEL: "${TTS_LOG_LEVEL:-info}"
-      TTS_ENABLE_SILERO: "${TTS_ENABLE_SILERO:-1}"
-      TTS_ENABLE_PIPER: "${TTS_ENABLE_PIPER:-1}"
-      TTS_PIPER_VOICES: "${TTS_PIPER_VOICES:-irina,denis,dmitri,ruslan}"
     healthcheck:
       test: ["CMD", "curl", "-fsS", "http://127.0.0.1:5000/health"]
       interval: 30s

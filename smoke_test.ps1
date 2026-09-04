@@ -1,6 +1,6 @@
 param(
     [string]$BaseUrl = "http://127.0.0.1:5000",
-    [string]$Speaker = "eugene",
+    [string]$Speaker = "ru_eduard",
     [string]$Text = "Привет, это проверка синтеза речи Respiral.",
     [string]$ApiToken = ""
 )

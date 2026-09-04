@@ -9,10 +9,10 @@ _VALID_RATES = (8000, 24000, 48000)
 
 
 class SileroEngine:
-    """Движок Silero v4_ru: 5 русских спикеров + random, поддержка SSML-prosody."""
+    """Движок Silero (v5_cis_base_nostress): русские спикеры ru_*, поддержка SSML-prosody.
+    Псевдо-спикер 'random' поддерживается только если он есть в самой модели (в v5 его нет)."""
 
     name = "silero"
-    supports_random = True
 
     def __init__(self, model_path: str, default_speaker: str, torch_threads: int):
         torch.set_num_threads(max(1, torch_threads))
@@ -21,14 +21,15 @@ class SileroEngine:
         self.model = importer.load_pickle("tts_models", "model")
         self.model.to(self.device)
         self.speakers = list(getattr(self.model, "speakers", []))
+        self.supports_random = "random" in self.speakers
         self.default_speaker = (
             default_speaker if default_speaker in self.speakers
-            else (self.speakers[0] if self.speakers else "random")
+            else (self.speakers[0] if self.speakers else "")
         )
         self._lock = threading.Lock()
 
     def resolve_speaker(self, speaker: str) -> str:
-        if speaker and (speaker in self.speakers or speaker == "random"):
+        if speaker and (speaker in self.speakers or (speaker == "random" and self.supports_random)):
             return speaker
         return self.default_speaker
 

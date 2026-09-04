@@ -43,26 +43,13 @@ class EngineRegistry:
 
 
 def build_registry(settings) -> "EngineRegistry":
-    engines = []
+    from .tts import SileroEngine
 
-    if settings.enable_silero:
-        from .tts import SileroEngine
-
-        logger.info("Loading Silero model from %s", settings.model_path)
-        engines.append(SileroEngine(
-            model_path=settings.model_path,
-            default_speaker=settings.default_speaker,
-            torch_threads=settings.torch_threads,
-        ))
-
-    if settings.enable_piper and settings.piper_voices:
-        from .piper_engine import PiperEngine
-
-        logger.info("Loading Piper voices %s from %s", settings.piper_voices, settings.piper_dir)
-        piper = PiperEngine(settings.piper_dir, settings.piper_voices)
-        if piper.speakers:
-            engines.append(piper)
-        else:
-            logger.warning("Piper enabled but no voice models found in %s", settings.piper_dir)
+    logger.info("Loading Silero model from %s", settings.model_path)
+    engines = [SileroEngine(
+        model_path=settings.model_path,
+        default_speaker=settings.default_speaker,
+        torch_threads=settings.torch_threads,
+    )]
 
     return EngineRegistry(engines, settings.default_speaker)
